@@ -362,6 +362,12 @@ class GO_Recurly
 	 */
 	public function go_subscriptions_signup_form( $form, $user_id, $get_vars )
 	{
+		if ( ! empty( $get_vars['go-subscriptions']['sub_request'] ) && 'advisory' === $get_vars['go-subscriptions']['sub_request'] && user_can( $user_id, 'signup_advisory' ) )
+		{
+			// if we've requested the advisory signup page, and are eligible to join an advisory, show step one, not the CC form
+			return $form;
+		}
+
 		if ( ! $user = get_user_by( 'id', $user_id ) )
 		{
 			return $form;
