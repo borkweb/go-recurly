@@ -362,22 +362,32 @@ class GO_Recurly
 	 */
 	public function go_subscriptions_signup_form( $form, $user_id, $get_vars )
 	{
+		$accounts_blog_id = $this->config( 'accounts_blog_id' );
+		if ( ! empty( $accounts_blog_id ) && $accounts_blog_id != get_current_blog_id() )
+		{
+			switch_to_blog( $accounts_blog_id );
+		}
+
 		if ( ! empty( $get_vars['go-subscriptions']['sub_request'] ) && 'advisory' === $get_vars['go-subscriptions']['sub_request'] && user_can( $user_id, 'signup_advisory' ) )
 		{
 			// if we've requested the advisory signup page, and are eligible to join an advisory, show step one, not the CC form
+			restore_current_blog();
 			return $form;
 		}
 
 		if ( ! $user = get_user_by( 'id', $user_id ) )
 		{
+			restore_current_blog();
 			return $form;
 		}
 
 		if ( user_can( $user, 'subscriber' ) )
 		{
+			restore_current_blog();
 			return $form;
 		}
 
+		restore_current_blog();
 		return $this->subscription_form( $user, array() );
 	}//END go_subscriptions_signup_form
 
