@@ -335,6 +335,11 @@ class GO_Recurly_Admin
 			return FALSE;
 		}
 
+		// XXX must be able to track more than just one subscription in
+		// our usermeta.
+		// we expect at most one individual sub (annual) and one advisory sub
+		// (advisory_monthly_payment or advisory_annual_payment)
+
 		// these are the date variables we want to track
 		$dates = array(
 			'activated_at',
