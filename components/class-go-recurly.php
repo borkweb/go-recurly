@@ -381,7 +381,9 @@ class GO_Recurly
 			return $form;
 		}
 
-		if ( user_can( $user, 'subscriber' ) )
+		// problematic here when an individual subscriber wants to upgrade
+		// to advisory
+		if ( user_can( $user, 'subscriber' ) && user_can( $user_id, 'signup_advisory' ) )
 		{
 			restore_current_blog();
 			return $form;
