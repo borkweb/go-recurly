@@ -8,24 +8,14 @@
 	}
 	else
 	{
+		do_action( 'go_recurly_subscriptions_pre_list' );
+
 		foreach ( $template_variables['subscriptions'] as $item )
 		{
 			$sub_starts   = isset( $item->activated_at )     ? $item->activated_at->getTimestamp()     : null;
 			$sub_ends     = isset( $item->expires_at )       ? $item->expires_at->getTimestamp()       : null;
 			$trial_starts = isset( $item->trial_started_at ) ? $item->trial_started_at->getTimestamp() : null;
 			$trial_ends   = isset( $item->trial_ends_at )    ? $item->trial_ends_at->getTimestamp()    : null;
-			
-			if ( 'annual' == $item->plan->plan_code )
-			{
-				?>
-				<p>
-					<?php echo esc_html( go_local_subscriptions()->config( 'cta_text_left_individual' ) ); ?>
-					<a href="<?php echo esc_url( go_local_subscriptions()->config( 'cta_href_individual' ) ); ?>" class="button">
-						<?php echo esc_html( go_local_subscriptions()->config( 'cta_text_individual' ) ); ?>
-					</a>
-				</p>
-				<?php
-			} // END if
 			?>
 			<div
 				id="subscription_<?php echo esc_attr( $item->uuid ); ?>"
