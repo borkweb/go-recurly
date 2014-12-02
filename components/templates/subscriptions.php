@@ -8,6 +8,8 @@
 	}
 	else
 	{
+		do_action( 'go_recurly_subscriptions_pre_list' );
+
 		foreach ( $template_variables['subscriptions'] as $item )
 		{
 			$sub_starts   = isset( $item->activated_at )     ? $item->activated_at->getTimestamp()     : null;
