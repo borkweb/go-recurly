@@ -54,7 +54,7 @@ class GO_Recurly_Test extends WP_UnitTestCase
 	public function test_singleton()
 	{
 		$this->assertTrue( is_object( go_recurly() ) );
-	}//END test_singletone
+	}//END test_singleton
 
 	// tests the case where recurly notification's account code matches
 	// one of our users
