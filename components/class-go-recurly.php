@@ -343,7 +343,7 @@ class GO_Recurly
 		}
 
 		// do not filter admins and subscribers
-		if ( user_can( $user, 'subscriber' ) )
+		if ( user_can( $user, 'subscriber' ) || user_can( $user, 'manage_options' ) )
 		{
 			return add_query_arg( $post_vars, $redirect_url );
 		}
