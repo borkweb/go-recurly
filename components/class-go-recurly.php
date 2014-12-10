@@ -362,6 +362,12 @@ class GO_Recurly
 	 */
 	public function go_subscriptions_signup_form( $form, $user_id, $get_vars )
 	{
+		// we need to switch to the Accounts blog to make sure the user_can()
+		// calls will see the newly created advisory post from step-1. In our
+		// normal use case, that post was created just seconds before we get
+		// here, and the new advisory post will not have made it from Accounts
+		// to Research via go-xpost yet, so we switch blog to Accounts here
+		// to get to the new advisory post more quickly.
 		$accounts_blog_id = $this->config( 'accounts_blog_id' );
 		if ( ! empty( $accounts_blog_id ) && $accounts_blog_id != get_current_blog_id() )
 		{
