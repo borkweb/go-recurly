@@ -32,7 +32,7 @@ class GO_Recurly
 		add_filter( 'user_has_cap', array( $this, 'user_has_cap' ), 10, 3 );
 
 		add_filter( 'go_subscriptions_signup', array( $this, 'go_subscriptions_signup' ), 10, 3 );
-		add_filter( 'go_subscriptions_signup_form', array( $this, 'go_subscriptions_signup_form' ), 10, 2 );
+		add_filter( 'go_subscriptions_signup_form', array( $this, 'go_subscriptions_signup_form' ), 10, 3 );
 
 		if ( ! is_admin() )
 		{
@@ -343,7 +343,7 @@ class GO_Recurly
 		}
 
 		// do not filter admins and subscribers
-		if ( user_can( $user, 'subscriber' ) )
+		if ( user_can( $user, 'subscriber' ) || user_can( $user, 'manage_options' ) )
 		{
 			return add_query_arg( $post_vars, $redirect_url );
 		}
@@ -354,19 +354,48 @@ class GO_Recurly
 	/**
 	 * callback for the "go_subscriptions_signup_form" filter. We return the
 	 * step-2 subscription form if $user_id is valid and is not a subscriber.
+	 *
+	 * @param string $form the current signup form to use
+	 * @param int the WP user id
+	 * @param array $get_vars
+	 * @return string the form to use
 	 */
-	public function go_subscriptions_signup_form( $form, $user_id )
+	public function go_subscriptions_signup_form( $form, $user_id, $get_vars )
 	{
+		// we need to switch to the Accounts blog to make sure the user_can()
+		// calls will see the newly created advisory post from step-1. In our
+		// normal use case, that post was created just seconds before we get
+		// here, and the new advisory post will not have made it from Accounts
+		// to Research via go-xpost yet, so we switch blog to Accounts here
+		// to get to the new advisory post more quickly.
+		$accounts_blog_id = $this->config( 'accounts_blog_id' );
+		if ( ! empty( $accounts_blog_id ) && $accounts_blog_id != get_current_blog_id() )
+		{
+			switch_to_blog( $accounts_blog_id );
+		}
+
+		if ( ! empty( $get_vars['go-subscriptions']['sub_request'] ) && 'advisory' === $get_vars['go-subscriptions']['sub_request'] && user_can( $user_id, 'signup_advisory' ) )
+		{
+			// if we've requested the advisory signup page, and are eligible to join an advisory, show step one, not the CC form
+			restore_current_blog();
+			return $form;
+		}
+
 		if ( ! $user = get_user_by( 'id', $user_id ) )
 		{
+			restore_current_blog();
 			return $form;
 		}
 
-		if ( user_can( $user, 'subscriber' ) )
+		// problematic here when an individual subscriber wants to upgrade
+		// to advisory
+		if ( user_can( $user, 'subscriber' ) && user_can( $user_id, 'signup_advisory' ) )
 		{
+			restore_current_blog();
 			return $form;
 		}
 
+		restore_current_blog();
 		return $this->subscription_form( $user, array() );
 	}//END go_subscriptions_signup_form
 
@@ -801,6 +830,9 @@ class GO_Recurly
 			// we will load the object so that we can see if they already have a recurly account code
 			$user->user_email = $get_vars['email'];
 		}//end if
+
+		// give other plugins a chance to override the plan code used
+		$sc_atts['plan_code'] = apply_filters( 'go_recurly_plan_code', $sc_atts['plan_code'], $user->user_email );
 
 		$this->recurly_client();
 

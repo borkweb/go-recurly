@@ -335,6 +335,9 @@ class GO_Recurly_Admin
 			return FALSE;
 		}
 
+		// we expect at most one active individual sub (annual) and one active
+		// advisory sub (advisory_monthly_payment or advisory_annual_payment)
+
 		// these are the date variables we want to track
 		$dates = array(
 			'activated_at',
@@ -369,6 +372,35 @@ class GO_Recurly_Admin
 			)
 			{
 				continue;
+			}
+
+			// if we're tracking an advisory sub and an individual sub comes
+			// along, skip it for now
+			if (
+				isset( $meta['sub_plan_code'] ) &&
+				(
+					'advisory_annual_payment' == $meta['sub_plan_code'] ||
+					'advisory_monthly_payment' == $meta['sub_plan_code']
+				) &&
+				'annual' == $subscription->plan->plan_code
+			)
+			{
+				continue;
+			}
+
+			// if we're tracking an individual sub and an advisory sub
+			// comes along, switch to the advisory sub
+			if (
+				isset( $meta['sub_plan_code'] ) &&
+				'annual' == $meta['sub_plan_code'] &&
+				(
+					'advisory_annual_payment' == $subscription->plan->plan_code ||
+					'advisory_monthly_payment' == $subscription->plan->plan_code
+				)
+			)
+			{
+				// remove everything except first_name and last_name
+				$meta = array_intersect_key( $meta, array( 'first_name' => 1, 'last_name' => 1 ) );
 			}
 
 			$meta['sub_plan_code'] = $subscription->plan->plan_code;
