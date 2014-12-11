@@ -832,7 +832,7 @@ class GO_Recurly
 		}//end if
 
 		// give other plugins a chance to override the plan code used
-		$sc_atts['plan_code'] = apply_filters( 'go_recurly_plan_code', $sc_atts['plan_code'], $user->user_email );
+		$sc_atts['plan_code'] = apply_filters( 'go_recurly_plan_code', $sc_atts['plan_code'], $user->user_email, $get_vars );
 
 		$this->recurly_client();
 
