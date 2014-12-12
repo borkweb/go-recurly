@@ -374,14 +374,53 @@ class GO_Recurly
 			switch_to_blog( $accounts_blog_id );
 		}
 
-		if ( ! empty( $get_vars['go-subscriptions']['sub_request'] ) && 'advisory' === $get_vars['go-subscriptions']['sub_request'] && user_can( $user_id, 'signup_advisory' ) )
+		// request for the initial sign up page by unauthenticated user
+		if (
+			! is_user_logged_in()
+			&&
+			! empty( $get_vars['go-subscriptions']['sub_request'] )
+			&&
+			empty( $get_vars['go-subscriptions']['email'] )
+		)
 		{
-			// if we've requested the advisory signup page, and are eligible to join an advisory, show step one, not the CC form
 			restore_current_blog();
 			return $form;
 		}
 
-		if ( ! $user = get_user_by( 'id', $user_id ) )
+		// step 1 form is requested by a logged-in user who's elegible to
+		// sign up for an advisory subscription
+		if (
+			! empty( $get_vars['go-subscriptions']['sub_request'] )
+			&&
+			'advisory' === $get_vars['go-subscriptions']['sub_request']
+			&&
+			is_user_logged_in()
+			&&
+			user_can( $user_id, 'signup_advisory' )
+		)
+		{
+			// show step one, not the CC form
+			restore_current_blog();
+			return $form;
+		}
+
+		if (
+			(
+				0 < $user_id
+				&&
+				! $user = get_user_by( 'id', $user_id )
+			)
+			||
+			(
+				// this is the case for a user who's not logged in but uses
+				// an email for an existing user to sign up
+				0 >= $user_id
+				&&
+				! empty( $get_vars['go-subscriptions']['email'] )
+				&&
+				! $user = get_user_by( 'email', $get_vars['go-subscriptions']['email'] )
+			)
+		)
 		{
 			restore_current_blog();
 			return $form;
