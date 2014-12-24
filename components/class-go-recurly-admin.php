@@ -428,9 +428,9 @@ class GO_Recurly_Admin
 			}//end foreach
 		}//end foreach
 
-		// the user doesn't have any subscriptions? set some info to defaults and bail.
-
-		if ( empty( $subscriptions ) )
+		// if the user doesn't have any subscription and isn't a member of a
+		// corporate or advisory account, set some info to defaults and bail.
+		if ( empty( $subscriptions ) && ! get_user_meta( $user_id, 'gomp_enterprise_source', TRUE ) )
 		{
 			go_user_profile()->set_role( $user, 'guest' );
 
@@ -484,26 +484,31 @@ class GO_Recurly_Admin
 			update_user_meta( $user_id, $this->core->meta_key_prefix . 'created_date', strtotime( $meta['sub_activated_at'] ) );
 		}
 
-		// set the role!
-		if ( 'active' == $meta['sub_state'] )
+		// set the role if the user is not a member of a corporate or
+		// advisory account
+		if ( ! get_user_meta( $user_id, 'gomp_enterprise_source', TRUE ) )
 		{
-			// if the user's subscription state is active, they are either a trial or a subscriber
-			if ( time() >= strtotime( $meta['sub_trial_ends_at'] ) )
+			if ( 'active' == $meta['sub_state'] )
 			{
-				// the current UTC time is greater than their trial end time...so...subscriber!
-				go_user_profile()->set_role( $user, 'subscriber' );
-			}
+				// if the user's subscription state is active, they are either a trial or a subscriber
+				if ( time() >= strtotime( $meta['sub_trial_ends_at'] ) )
+				{
+					// the current UTC time is greater than their trial end time...so...subscriber!
+					go_user_profile()->set_role( $user, 'subscriber' );
+				}
+				else
+				{
+					// their trial is still going on, mark them as a trial subscription
+					go_user_profile()->set_role( $user, 'subscriber-trial' );
+				}
+			}//end if
 			else
 			{
-				// their trial is still going on, mark them as a trial subscription
-				go_user_profile()->set_role( $user, 'subscriber-trial' );
+				// looks like this user's subscription isn't active.
+				// change them over to a guest
+				go_user_profile()->set_role( $user, 'guest' );
 			}
-		}//end if
-		else
-		{
-			// looks like this user's subscription isn't active, change them over to a guest
-			go_user_profile()->set_role( $user, 'guest' );
-		}
+		}//END if
 
 		$this->core->update_subscription_meta( $user_id, $meta );
 
